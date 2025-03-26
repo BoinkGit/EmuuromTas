@@ -1,64 +1,55 @@
 from pynput.keyboard import Controller, Key
 from time import sleep
 from sys import platform
+import re
 
-if platform == 'win32':
-    movesList = open('assets\\get_scanner.txt', 'r')
+# --- Load move list ---
+if platform == "win32":
+    moves_path = "assets\\get_scanner.txt"
 else:
-    movesList = open('assets/get_scanner.txt', 'r')
+    moves_path = "assets/get_scanner.txt"
 
-moves = []
-for line in movesList:
-    moves.append(line.removesuffix("\n"))
+with open(moves_path, "r") as f:
+    moves = [line.strip() for line in f if line.strip()]
 
+# --- Key Mapping ---
+def char_to_key(char):
+    mapping = {
+        "u": Key.up,
+        "d": Key.down,
+        "l": Key.left,
+        "r": Key.right,
+        "e": Key.esc
+    }
+    return mapping.get(char, char)  # if not mapped, treat as normal character
 
-movesList.close()
+# --- Parse line like zl10 into ([Key.z, Key.left], 10) ---
+def parse_line(line):
+    match = re.match(r"([a-zA-Z]+)(\d*)", line)
+    if not match:
+        raise ValueError(f"Invalid line format: {line}")
 
-#kb: Keyboard
-kb = Controller()
+    key_part, frame_part = match.groups()
+    keys = [char_to_key(c) for c in key_part]
+    frames = int(frame_part) if frame_part else 1  # default to 1 frame if omitted
 
-def changeToKeys(lst):
-    ret = []
-    for character in lst:
-        if character == 'u':
-            character = Key.up
-        elif character == 'd':
-            character = Key.down
-        elif character == 'l':
-            character = Key.left
-        elif character == 'r':
-            character = Key.right
-        elif character == 'e':
-            character = Key.esc
+    return keys, frames
 
-
-        ret.append(character)
-    return ret
-
-
-def runKeys(keys):
-    for currentKeyString in keys:
-        try: 
-            loops = int(currentKeyString) - 1
-            for i in range(loops):
-                for key in currentKeyList:
-                    kb.press(key)
-                sleep(0.05)
-                for key in currentKeyList:
-                    kb.release(key)
-        except ValueError: 
-            if len(currentKeyString) == 1:
-                currentKeyList = [currentKeyString]
-            else:
-                currentKeyList = [currentKeyString[i] for i in range(len(currentKeyString))]
-            currentKeyList = changeToKeys(currentKeyList)
-            for key in currentKeyList:
+# --- Send Keys ---
+def runKeys(moves):
+    kb = Controller()
+    for line in moves:
+        keys, frames = parse_line(line)
+        print(f"Pressing {keys} for {frames} frames")
+        for i in range(frames):
+            for key in keys:
                 kb.press(key)
             sleep(0.05)
-            for key in currentKeyList:
+            for key in keys:
                 kb.release(key)
-        
-sleep(.05)
+
+# --- Run ---
+sleep(0.50)
 print("START")
 runKeys(moves)
-print('FINISHED')
+print("FINISHED")
