@@ -1,16 +1,37 @@
 from pynput.keyboard import Controller, Key
-from time import sleep
+from time import sleep, perf_counter
 from sys import platform
 import re
 
-# --- Load move list ---
-if platform == "win32":
-    moves_path = "assets\\get_scanner.txt"
-else:
-    moves_path = "assets/get_scanner.txt"
+get_scanner = [
+    "scanner_1.txt",
+    # "soft_reset.txt",
+    "scanner_2.txt",
+]
 
-with open(moves_path, "r") as f:
-    moves = [line.strip() for line in f if line.strip()]
+nested_files = [
+    "full_reset.txt",
+    get_scanner,
+]
+
+files = []
+for file in nested_files:
+    if isinstance(file, list):
+        files.extend(file)
+    else:
+        files.append(file)
+# --- Load moves ---
+moves = []
+for file in files:
+    if platform == "win32":
+        current_path = "assets\\" + file
+    else:
+        current_path = "assets/" + file
+
+    with open(current_path, "r") as f:
+        current_moves = [line.strip() for line in f if line.strip()]
+    
+    moves.extend(current_moves)
 
 # --- Key Mapping ---
 def char_to_key(char):
@@ -19,7 +40,9 @@ def char_to_key(char):
         "d": Key.down,
         "l": Key.left,
         "r": Key.right,
-        "e": Key.esc
+
+        "e": Key.esc,
+        "s": Key.space
     }
     return mapping.get(char, char)  # if not mapped, treat as normal character
 
@@ -35,18 +58,34 @@ def parse_line(line):
 
     return keys, frames
 
-# --- Send Keys ---
+# --- Run Keys with precise timing ---
 def runKeys(moves):
     kb = Controller()
+    frame_time = 1 / 20  # 0.05 seconds per frame
+
     for line in moves:
         keys, frames = parse_line(line)
         print(f"Pressing {keys} for {frames} frames")
-        for i in range(frames):
+
+        for _ in range(frames):
+            start_time = perf_counter()
+
+            # Press keys
             for key in keys:
                 kb.press(key)
-            sleep(0.05)
+
+            # Wait until next frame cycle
+            middle_time = perf_counter();
+            elapsed_time = middle_time - start_time
+            sleep_time = max(0, frame_time - 2*elapsed_time) # it will take roughly the same amount of time to press the keys as to release it, so we account for both
+            sleep(sleep_time)
+
+            # Release keys
             for key in keys:
                 kb.release(key)
+            end_time = perf_counter()
+            elapsed_time = end_time - start_time
+            sleep_time = max(0, frame_time - elapsed_time) # wait any remaining time until the full length is reached
 
 # --- Run ---
 sleep(0.50)
