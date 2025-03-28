@@ -86,6 +86,7 @@ def runKeys(moves):
             end_time = perf_counter()
             elapsed_time = end_time - start_time
             sleep_time = max(0, frame_time - elapsed_time) # wait any remaining time until the full length is reached
+            sleep(sleep_time)
 
 # --- Run ---
 sleep(0.50)
