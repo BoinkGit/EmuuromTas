@@ -20,6 +20,7 @@ for file in nested_files:
         files.extend(file)
     else:
         files.append(file)
+
 # --- Load moves ---
 moves = []
 for file in files:
@@ -40,9 +41,8 @@ def char_to_key(char):
         "d": Key.down,
         "l": Key.left,
         "r": Key.right,
-
         "e": Key.esc,
-        "s": Key.space
+        "s": Key.space,
     }
     return mapping.get(char, char)  # if not mapped, treat as normal character
 
@@ -62,34 +62,37 @@ def parse_line(line):
 def runKeys(moves):
     kb = Controller()
     frame_time = 1 / 20  # 0.05 seconds per frame
+    offset = 0.004
 
     for line in moves:
-        keys, frames = parse_line(line)
-        print(f"Pressing {keys} for {frames} frames")
+        keys, num_frames = parse_line(line)
 
-        for _ in range(frames):
-            start_time = perf_counter()
+        # Format keys for printing, ensuring special keys show their full representation
+        formatted_keys = [repr(key) if isinstance(key, Key) else key for key in keys]
+        print(f"Pressing {formatted_keys} for {num_frames} frames")
 
-            # Press keys
-            for key in keys:
-                kb.press(key)
+        start_time = perf_counter()
 
-            # Wait until next frame cycle
-            middle_time = perf_counter();
-            elapsed_time = middle_time - start_time
-            sleep_time = max(0, frame_time - 2*elapsed_time) # it will take roughly the same amount of time to press the keys as to release it, so we account for both
+        # Press keys
+        for key in keys:
+            kb.press(key)
+
+        sleep(num_frames*frame_time - offset)
+
+        # Release keys
+        for key in keys:
+            kb.release(key)
+        
+        end_time = perf_counter()
+        elapsed_time = end_time - start_time
+        sleep_time = num_frames*frame_time - elapsed_time
+        offset -= 0.5*sleep_time
+        if sleep_time > 0:
             sleep(sleep_time)
-
-            # Release keys
-            for key in keys:
-                kb.release(key)
-            end_time = perf_counter()
-            elapsed_time = end_time - start_time
-            sleep_time = max(0, frame_time - elapsed_time) # wait any remaining time until the full length is reached
-            sleep(sleep_time)
+        offset = max(0.0035, min(0.0055, offset))
 
 # --- Run ---
-sleep(0.50)
+sleep(0.75)
 print("START")
 runKeys(moves)
 print("FINISHED")
