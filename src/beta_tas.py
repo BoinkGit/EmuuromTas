@@ -62,14 +62,14 @@ def parse_line(line):
 def runKeys(moves):
     kb = Controller()
     frame_time = 1 / 20  # 0.05 seconds per frame
+
+    update_rate = 0.5
     offset = 0.004
 
     for line in moves:
         keys, num_frames = parse_line(line)
 
-        # Format keys for printing, ensuring special keys show their full representation
-        formatted_keys = [repr(key) if isinstance(key, Key) else key for key in keys]
-        print(f"Pressing {formatted_keys} for {num_frames} frames")
+        print(f"Pressing {keys} for {num_frames} frames")
 
         start_time = perf_counter()
 
@@ -86,10 +86,11 @@ def runKeys(moves):
         end_time = perf_counter()
         elapsed_time = end_time - start_time
         sleep_time = num_frames*frame_time - elapsed_time
-        offset -= 0.5*sleep_time
         if sleep_time > 0:
             sleep(sleep_time)
-        offset = max(0.0035, min(0.0055, offset))
+
+        offset = offset - update_rate*sleep_time
+        offset = max(0.003, min(0.006, offset))
 
 # --- Run ---
 sleep(0.75)
