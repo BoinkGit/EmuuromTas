@@ -3,14 +3,16 @@ from time import sleep, perf_counter
 from sys import platform
 import re
 
+FRAMERATE = 20
+
 get_scanner = [
-    "scanner_1.txt",
-    # "soft_reset.txt",
+    # "scanner_1.txt",
+    "soft_reset.txt",
     "scanner_2.txt",
 ]
 
 nested_files = [
-    "full_reset.txt",
+    # "full_reset.txt",
     get_scanner,
 ]
 
@@ -61,7 +63,8 @@ def parse_line(line):
 # --- Run Keys with precise timing ---
 def runKeys(moves):
     kb = Controller()
-    frame_time = 1 / 20  # 0.05 seconds per frame
+
+    frame_time = 1.0/FRAMERATE
 
     update_rate = 0.5
     offset = 0.004
