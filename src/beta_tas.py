@@ -5,15 +5,22 @@ import re
 
 FRAMERATE = 20
 
-get_scanner = [
-    # "scanner_1.txt",
-    "soft_reset.txt",
+scanner = [
+    "scanner_1.txt",
+    # "soft_reset.txt",
     "scanner_2.txt",
 ]
 
+piakana = [
+    "piakana_1.txt",
+    # "soft_reset.txt",
+    "piakana_2.txt",
+]
+
 nested_files = [
-    # "full_reset.txt",
-    get_scanner,
+    "full_reset.txt",
+    scanner,
+    piakana,
 ]
 
 files = []
